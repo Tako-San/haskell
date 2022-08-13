@@ -10,22 +10,19 @@ instance Enum Odd where
   toEnum n = Odd $ toInteger n
   fromEnum (Odd n) = fromInteger n
 
-  enumFrom a = a : enumFrom (succ a)
-  enumFromThen frm@(Odd n1) thn@(Odd n2) = frm
-    : enumFromThen thn (Odd $ n2 + diff)
-    where diff = n2 - n1
+  enumFrom = iterate succ
+  enumFromThen frm@(Odd n1) thn@(Odd n2) = iterate inc frm
+    where inc (Odd n) = Odd $ n + diff where diff = n2 - n1
 
-  enumFromTo frm@(Odd n1) to@(Odd n2)
-    | n1 > n2   = []
-    | otherwise = frm : enumFromTo (succ frm) to
+  enumFromTo frm@(Odd n1) to@(Odd n2) =
+    takeWhile (\(Odd n) -> n <= n2) $ enumFrom frm
 
-  enumFromThenTo frm@(Odd n1) thn@(Odd n2) to = helper frm to
+  enumFromThenTo frm@(Odd n1) thn@(Odd n2) to@(Odd n3) = takeWhile pred $ iterate inc frm
    where
     step = n2 - n1
     sign = signum step
-    helper frm'@(Odd n1') to'@(Odd n2')
-      | n1' * sign > n2' * sign = []
-      | otherwise               = frm' : helper (Odd $ n1' + step) to'
+    pred (Odd n) = n * sign <= n3 * sign
+    inc (Odd n) = Odd $ n + step
 
 {-
 
@@ -44,38 +41,65 @@ testVal n = Odd $ baseVal + n
 test0 = succ (testVal 1) == (testVal 3)
 test1 = pred (testVal 3) == (testVal 1)
 -- enumFrom
-test2 = take 4 [testVal 1 ..] == [testVal 1,testVal 3,testVal 5,testVal 7]
+test2 = take 4 [testVal 1 ..] == [testVal 1, testVal 3, testVal 5, testVal 7]
 -- enumFromTo
 -- -- По возрастанию
-test3 = take 9 [testVal 1..testVal 7] == [testVal 1,testVal 3,testVal 5,testVal 7]
+test3 =
+  take 9 [testVal 1 .. testVal 7]
+    == [testVal 1, testVal 3, testVal 5, testVal 7]
 -- -- По убыванию
-test4 = take 3 [testVal 7..testVal 1] == []
+test4 = take 3 [testVal 7 .. testVal 1] == []
 -- enumFromThen
 -- -- По возрастанию
-test5 = take 4 [testVal 1, testVal 5 ..] == [testVal 1,testVal 5,testVal 9,testVal 13]
+test5 =
+  take 4 [testVal 1, testVal 5 ..]
+    == [testVal 1, testVal 5, testVal 9, testVal 13]
 -- -- По убыванию
-test6 = take 4 [testVal 5, testVal 3 ..] == [testVal 5,testVal 3,testVal 1,testVal (-1)]
+test6 =
+  take 4 [testVal 5, testVal 3 ..]
+    == [testVal 5, testVal 3, testVal 1, testVal (-1)]
 -- enumFromThenTo
 -- -- По возрастанию
-test7 = [testVal 1, testVal 5 .. testVal 11] == [testVal 1,testVal 5,testVal 9]
+test7 =
+  [testVal 1, testVal 5 .. testVal 11] == [testVal 1, testVal 5, testVal 9]
 -- -- По убыванию
-test8 = [testVal 7, testVal 5 .. testVal 1] == [testVal 7,testVal 5,testVal 3,testVal 1]
+test8 =
+  [testVal 7, testVal 5 .. testVal 1]
+    == [testVal 7, testVal 5, testVal 3, testVal 1]
 -- -- x1 < x3 && x1 > x2
 test9 = [testVal 7, testVal 5 .. testVal 11] == []
 -- -- x1 > x3 && x1 < x2
 test10 = [testVal 3, testVal 5 .. testVal 1] == []
 
-test11 = take 4 [testVal 5, testVal 5 .. ] == replicate 4 (testVal 5)
+test11 = take 4 [testVal 5, testVal 5 ..] == replicate 4 (testVal 5)
 test12 = take 4 [testVal 5, testVal 5 .. testVal 11] == replicate 4 (testVal 5)
 test13 = take 4 [testVal 5, testVal 5 .. testVal 5] == replicate 4 (testVal 5)
 test14 = [testVal 5, testVal 5 .. testVal 3] == []
 test15 = [testVal 5, testVal 1 .. testVal 5] == [testVal 5]
 test16 = toEnum (fromEnum (Odd 3)) == Odd 3
 -- Это сомнительный тест. Скорее всего, его нет на stepik
-test17 = fromEnum(Odd 3) + 1 == fromEnum(Odd 5)
+test17 = fromEnum (Odd 3) + 1 == fromEnum (Odd 5)
 
-testList = [test0, test1, test2, test3, test4, test5, test6, test7, test8, test9, test10,
-            test11, test12, test13, test14, test15, test16, test17]
-allTests = zip [0..] testList
+testList =
+  [ test0
+  , test1
+  , test2
+  , test3
+  , test4
+  , test5
+  , test6
+  , test7
+  , test8
+  , test9
+  , test10
+  , test11
+  , test12
+  , test13
+  , test14
+  , test15
+  , test16
+  , test17
+  ]
+allTests = zip [0 ..] testList
 -- Список тестов с ошибками
 badTests = map fst $ filter (not . snd) allTests
