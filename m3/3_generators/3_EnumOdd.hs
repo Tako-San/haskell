@@ -10,19 +10,11 @@ instance Enum Odd where
   toEnum n = Odd $ toInteger n
   fromEnum (Odd n) = fromInteger n
 
-  enumFrom = iterate succ
-  enumFromThen frm@(Odd n1) thn@(Odd n2) = iterate inc frm
-    where inc (Odd n) = Odd $ n + diff where diff = n2 - n1
+  enumFrom (Odd frm) = map Odd [frm, frm + 2 ..]
+  enumFromThen (Odd frm) (Odd thn) = map Odd [frm, thn ..]
 
-  enumFromTo frm@(Odd n1) to@(Odd n2) =
-    takeWhile (\(Odd n) -> n <= n2) $ enumFrom frm
-
-  enumFromThenTo frm@(Odd n1) thn@(Odd n2) to@(Odd n3) = takeWhile pred $ iterate inc frm
-   where
-    step = n2 - n1
-    sign = signum step
-    pred (Odd n) = n * sign <= n3 * sign
-    inc (Odd n) = Odd $ n + step
+  enumFromTo (Odd frm) (Odd to) = map Odd [frm, frm + 2 .. to]
+  enumFromThenTo (Odd frm) (Odd thn) (Odd to) = map Odd [frm, thn .. to]
 
 {-
 
